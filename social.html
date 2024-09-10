@@ -113,13 +113,13 @@
                 document.getElementById('username-display').textContent = userData.nome;
                 document.getElementById('profile-pic').src = userData.avatarUrl || 'default-profile.jpg';
             } else {
-                window.location.href = 'login.html'; // Redireciona se os dados estiverem ausentes
+                window.location.href = 'index.html'; // Redireciona se os dados estiverem ausentes
             }
         }
 
         // Função para fazer logout
         function logout() {
-            window.location.href = 'login.html'; // Redireciona para a página de login
+            window.location.href = 'index.html'; // Redireciona para a página de login
         }
 
         // Função para abrir o input de arquivo ao clicar na imagem

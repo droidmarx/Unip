@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .header .username {
+            margin-right: 20px;
+        }
+        .header .logout-button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .header .logout-button:hover {
+            background-color: #c82333;
+        }
+        .content {
+            padding: 20px;
+        }
+        .chat-container {
+            margin-top: 20px;
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: scroll;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-input {
+            width: calc(100% - 110px);
+            padding: 10px;
+        }
+        .send-button {
+            width: 100px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img id="profile-pic" src="default-profile.jpg" alt="Profile Picture" onclick="triggerFileUpload()">
+        <input type="file" id="avatar-input" style="display:none" accept="image/*" onchange="updateProfilePic(event)">
+        <div class="username" id="username-display">Nome do Usuário</div>
+        <button class="logout-button" onclick="logout()">Sair</button>
+    </div>
+    <div class="content">
+        <h1>Bem-vindo à página social</h1>
+        <div class="chat-container">
+            <div id="chat-box" class="chat-box"></div>
+            <input id="chat-input" class="chat-input" type="text" placeholder="Digite uma mensagem...">
+            <button id="send-button" class="send-button">Enviar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
+    <script>
+        const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // Substitua pelo seu preset do Cloudinary
+        const CLOUDINARY_CLOUD_NAME = 'dhivkajaz'; // Substitua pelo seu Cloud name do Cloudinary
+        const ABLY_API_KEY = 'ynrGug.SXDJOg:aoStJmyUcLlpwgEzYsJt8CFDsTBCq-yMjqNn6_DkgvM';
+        const CHANNEL_NAME = 'chat-channel';
+
+        // Inicializa o cliente Ably
+        const ably = new Ably.Realtime({ key: ABLY_API_KEY });
+        const channel = ably.channels.get(CHANNEL_NAME);
+
+        // Função para obter os parâmetros de URL
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                nome: params.get('nome'),
+                avatarUrl: params.get('avatarUrl')
+            };
+        }
+
+        // Carrega as informações do usuário da URL e exibe na página
+        function loadUserData() {
+            const userData = getQueryParams();
+
+            if (userData.nome && userData.avatarUrl) {
+                document.getElementById('username-display').textContent = userData.nome;
+                document.getElementById('profile-pic').src = userData.avatarUrl || 'default-profile.jpg';
+            } else {
+                window.location.href = 'login.html'; // Redireciona se os dados estiverem ausentes
+            }
+        }
+
+        // Função para fazer logout
+        function logout() {
+            window.location.href = 'login.html'; // Redireciona para a página de login
+        }
+
+        // Função para abrir o input de arquivo ao clicar na imagem
+        function triggerFileUpload() {
+            document.getElementById('avatar-input').click();
+        }
+
+        // Função para fazer upload de imagens para o Cloudinary
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            return data.secure_url;
+        }
+
+        // Função para atualizar a imagem do perfil quando o arquivo for selecionado
+        async function updateProfilePic(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const newAvatarUrl = await uploadImage(file);
+
+                // Atualiza a imagem do perfil
+                document.getElementById('profile-pic').src = newAvatarUrl;
+
+                // Atualiza a URL da imagem do perfil na URL da página
+                const params = new URLSearchParams(window.location.search);
+                params.set('avatarUrl', newAvatarUrl);
+                window.history.replaceState(null, null, '?' + params.toString());
+            }
+        }
+
+        // Função para enviar uma mensagem
+        function sendMessage() {
+            const messageInput = document.getElementById('chat-input');
+            const message = messageInput.value.trim();
+            if (message) {
+                channel.publish('message', {
+                    text: message,
+                    user: document.getElementById('username-display').textContent
+                });
+                messageInput.value = '';
+            }
+        }
+
+        // Adiciona um ouvinte para novos eventos de mensagem
+        channel.subscribe('message', (message) => {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${message.data.user}: ${message.data.text}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        // Configura o botão de envio
+        document.getElementById('send-button').addEventListener('click', sendMessage);
+
+        // Configura o input para enviar a mensagem com Enter
+        document.getElementById('chat-input').addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+                event.preventDefault();
+            }
+        });
+
+        // Carrega os dados do usuário ao abrir a página
+        loadUserData();
+    </script>
+</body>
+</html>

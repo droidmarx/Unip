@@ -30,6 +30,7 @@
             grid-template-columns: 100px 1fr;
             gap: 10px;
             align-items: center;
+            position: relative;
         }
         .user-item img {
             width: 100px;
@@ -46,6 +47,7 @@
         .user-info span {
             display: flex;
             justify-content: space-between;
+            
         }
         .user-info span strong {
             width: 100px;
@@ -55,6 +57,17 @@
             border-radius: 3px;
             background-color: #f0f0f0;
             cursor: text;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            max-width: 150px;
+        }
+        .user-info span[contenteditable]:focus {
+           max-width: 300px;
+           scale: 1.2;
+           transition: 1s ease;
+           position: absolute;
+           z-index: 100;
         }
         .user-item button {
             margin-top: 10px;

@@ -115,6 +115,7 @@
                                 <span><strong>Nome:</strong> <span contenteditable="true" onblur="updateUser('${user.Id}', 'nome', this.textContent)">${user.nome || 'Nome não disponível'}</span></span>
                                 <span><strong>ID (Login):</strong> <span contenteditable="true" onblur="updateUser('${user.Id}', 'login', this.textContent)">${user.login || 'Login não disponível'}</span></span>
                                 <span><strong>Senha:</strong> <span contenteditable="true" onblur="updateUser('${user.Id}', 'password', this.textContent)">${user.password || 'Senha não disponível'}</span></span>
+                                <span><strong>E-mail:</strong> <span contenteditable="true" onblur="updateUser('${user.Id}', 'email', this.textContent)">${user.email || 'E-mail não disponível'}</span></span>
                                 <button class="delete-button" onclick="deleteUser('${user.Id}')">Remover</button>
                             </div>
                         `;
